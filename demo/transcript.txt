@@ -18,3 +18,30 @@ REVIEW  esbenp.prettier-vscode@12.4.0
   [medium] runs-on-startup: activationEvents includes "onStartupFinished" (code runs at every startup)
   [medium] bundled-binary: vsix ships executable: extension/node_modules/prettier/bin/prettier.cjs
   [medium] cross-registry-hash-mismatch: version 12.4.0 has different sha256 on VS Marketplace vs Open VSX — registries disagree, verify out-of-band before installing
+
+$ node dist/cli.js pin esbenp.prettier-vscode@12.4.0   # trust this version once
+pinned esbenp.prettier-vscode@12.4.0  sha256:46d22a567b35ebe5…
+
+$ node dist/cli.js verify esbenp.prettier-vscode@12.4.0 --json | head -20   # re-verify: pin matches, no repack
+{
+  "verdict": "REVIEW",
+  "extension": {
+    "id": "esbenp.prettier-vscode",
+    "version": "12.4.0",
+    "displayName": "Prettier - Code formatter",
+    "publisher": "esbenp",
+    "publisherVerified": true,
+    "installs": 72746552,
+    "sha256": "46d22a567b35ebe5bdffd7280457742cd67e65d7e1b250bb775ab2be86479a42"
+  },
+  "findings": [
+    {
+      "rule": "runs-on-startup",
+      "severity": "medium",
+      "evidence": "activationEvents includes \"onStartupFinished\" (code runs at every startup)"
+    },
+    {
+      "rule": "bundled-binary",
+      "severity": "medium",
+      "evidence": "vsix ships executable: extension/node_modules/prettier/bin/prettier.cjs"
+    },

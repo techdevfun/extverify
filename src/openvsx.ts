@@ -2,7 +2,11 @@
  * Open VSX registry client (https://open-vsx.org/api) — public, no key.
  * Used for cross-registry hash comparison: the 29/10/2026 incident served
  * tampered bytes ONLY on one distribution path while other registries held
- * the clean artifact. Same version + different bytes across registries = DENY.
+ * the clean artifact. Same version + different bytes across registries is a
+ * MEDIUM finding (REVIEW): publishers legitimately repackage between
+ * registries, so a mismatch warrants out-of-band investigation, not an
+ * auto-block. The 29/10 malicious versions were absent from both public
+ * registries entirely.
  */
 import { createHash } from "node:crypto";
 

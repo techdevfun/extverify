@@ -39,6 +39,17 @@ def color_for(line: str):
 frames = []
 canvas: list[tuple[str, tuple]] = []  # (text, color)
 
+# Title card (3s): what the demo shows
+title = Image.new("RGB", (W, H), BG)
+d = ImageDraw.Draw(title)
+d.text((14, 120), "extverify — verify before you install", font=bold, fill=GREEN)
+d.text((14, 170), "1. 29/10 incident shape (recorded fixture)  -> DENY", font=font, fill=FG)
+d.text((14, 200), "2. live: esbenp.prettier-vscode               -> REVIEW", font=font, fill=FG)
+d.text((14, 230), "3. pin -> verify --json (repack detection)   -> pin matches", font=font, fill=FG)
+d.text((14, 300), "zero-dep CLI · no model · no account", font=font, fill=DIM)
+for _ in range(50):
+    frames.append(title.copy())
+
 def render(typed_suffix=""):
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
@@ -88,7 +99,7 @@ frames[0].save(
     "demo/extverify-demo.gif",
     save_all=True,
     append_images=frames[1:],
-    duration=45,
+    duration=60,
     loop=0,
 )
 print(f"frames={len(frames)} size={__import__('os').path.getsize('demo/extverify-demo.gif')}")

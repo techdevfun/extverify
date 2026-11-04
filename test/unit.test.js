@@ -12,6 +12,7 @@ import { listEntries, readEntry, readPackageJson } from "../dist/zip.js";
 import { parseExtensionId } from "../dist/market.js";
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
+import { deflateRawSync } from "node:zlib";
 
 describe("parseExtensionId", () => {
   it("parses publisher.name", () => {
@@ -207,5 +208,42 @@ describe("zip reader (crafted in-memory zip)", () => {
   });
   it("rejects non-zip", () => {
     assert.throws(() => listEntries(Buffer.from("hello")), /not a zip/);
+  });
+  it("inflates DEFLATE (method 8) entries — the path real VSIXes use", () => {
+    const payload = Buffer.from(
+      JSON.stringify({ name: "y", version: "1.0.0", padding: "x".repeat(2000) }),
+    );
+    const deflated = deflateRawSync(payload);
+    const fname = Buffer.from("extension/package.json");
+    const local = Buffer.alloc(30 + fname.length + deflated.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(8, 8); // method 8 = deflate
+    local.writeUInt32LE(deflated.length, 18);
+    local.writeUInt32LE(payload.length, 22);
+    local.writeUInt16LE(fname.length, 26);
+    fname.copy(local, 30);
+    deflated.copy(local, 30 + fname.length);
+    const cd = Buffer.alloc(46 + fname.length);
+    cd.writeUInt32LE(0x02014b50, 0);
+    cd.writeUInt16LE(8, 10);
+    cd.writeUInt32LE(deflated.length, 20);
+    cd.writeUInt32LE(payload.length, 24);
+    cd.writeUInt16LE(fname.length, 28);
+    cd.writeUInt32LE(0, 42);
+    fname.copy(cd, 46);
+    const eocd = Buffer.alloc(22);
+    eocd.writeUInt32LE(0x06054b50, 0);
+    eocd.writeUInt16LE(1, 8);
+    eocd.writeUInt16LE(1, 10);
+    eocd.writeUInt32LE(cd.length, 12);
+    eocd.writeUInt32LE(local.length, 16);
+    const buf = Buffer.concat([local, cd, eocd]);
+    const entries = listEntries(buf);
+    assert.equal(entries[0].method, 8);
+    const data = readEntry(buf, entries[0]);
+    assert.deepEqual(JSON.parse(data.toString()).name, "y");
+    const m = readPackageJson(buf);
+    assert.ok(m && m.name === "y");
   });
 });

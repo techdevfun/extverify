@@ -22,3 +22,5 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: node --test test/live.test.js
+        name: live smoke (soft-skip offline)
