@@ -47,6 +47,7 @@ Exit codes: `0` = ALLOW/REVIEW, `1` = DENY, `2` = usage/error.
 
 ## Honest limits
 
+- **Does not query Cursor's marketplace mirror** — the 29/10/2026 tampered bytes were served only on Cursor's distribution path, which extverify cannot see. Against that *exact* shape (right identifier, wrong bytes, one unseen path), extverify reports what the public registries show — not a DENY. The replay fixture (`scripts/replay-2910.js`) is the squat-publisher *variant* this tool can catch on a queried registry, documented as a reconstruction, not the pulled artifact.
 - **Cannot catch a compromised long-trusted publisher account** pushing clean-looking bytes — it checks anomaly, not account takeover.
 - **Cannot catch behaviorally-obfuscated malware** (see Socket's GlassWorm research): this is a listing/manifest checker, not a code-behavior analyzer. For deep analysis use Socket.dev.
 - **A warning can be ignored** — the tool only works if your agent is wired to call it before install (same model as vetgate, our sibling pre-install gate for npm packages / Actions / scripts: different detection domain, complementary).
@@ -62,6 +63,13 @@ npm install -g extverify   # after npm publish (pending)
 # or from source:
 git clone https://github.com/techdevfun/extverify && cd extverify && npm ci && npm run build
 ```
+
+## Roadmap
+
+- **More registries** — query additional distribution paths (editor-vendor mirrors) for cross-path hash comparison, closing the 29/10 blind spot in Honest limits.
+- **Agent wiring** — pre-install hook recipes for popular coding agents so the verdict is enforced, not advisory.
+- **Policy files** — per-team allow/deny lists (`extverify.policy.json`) for org-wide rollout.
+- **SARIF output** — machine-readable findings for CI pipelines.
 
 ## Name note
 

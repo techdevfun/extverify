@@ -4,10 +4,9 @@
  * Usage:
  *   extverify verify <publisher.name[@version]> [--json]
  *   extverify pin    <publisher.name[@version]>
- *   extverify unpin  <publisher.name[@version]>
+ *   extverify unpin  <publisher.name@version>
  */
-import { parseExtensionId, vsixDownloadUrl } from "./market.js";
-import { fetchExtension } from "./market.js";
+import { fetchExtension, parseExtensionId, vsixDownloadUrl } from "./market.js";
 import { hashRemoteVsix } from "./openvsx.js";
 import { delPin, setPin } from "./pin.js";
 import { formatHuman, verifyExtension } from "./verify.js";
@@ -17,7 +16,7 @@ function usage(): never {
     "usage:\n" +
       "  extverify verify <publisher.name[@version]> [--json]\n" +
       "  extverify pin    <publisher.name[@version]>\n" +
-      "  extverify unpin  <publisher.name[@version]@version>",
+      "  extverify unpin  <publisher.name@version>",
   );
   process.exit(2);
 }

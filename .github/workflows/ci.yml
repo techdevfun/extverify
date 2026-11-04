@@ -22,5 +22,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: node scripts/preflight.js
+        name: preflight (LUAT 7 — language/internal-name scan)
+      - run: node scripts/replay-2910.js
+        name: incident replay (recorded fixture -> DENY)
       - run: node --test test/live.test.js
         name: live smoke (soft-skip offline)

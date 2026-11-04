@@ -1,9 +1,12 @@
 /**
- * Incident replay: the 29/10/2026 fake-extension SHAPE, reconstructed as a
- * recorded fixture. The real malicious versions were pulled from the
- * marketplace, so this replays the *detectable shape* (new squat publisher,
- * explosive installs, startup activation, bundled binary) through the real
- * verify pipeline with a stub fetch.
+ * Incident replay: a 29/10/2026-INSPIRED shape, reconstructed as a recorded
+ * fixture. IMPORTANT — this is NOT the exact attack: the real 29/10 attack
+ * served tampered bytes under the REAL publisher name ("Anthropic") on
+ * Cursor's marketplace mirror, which extverify does not query (see README
+ * "Honest limits"). This fixture replays the *squat-publisher variant* the
+ * tool CAN catch on a queried registry (lookalike publisher, explosive
+ * installs, startup activation, bundled binary) through the real verify
+ * pipeline with a stub fetch.
  *
  * Provenance: incident facts from Cursor security notice 29/10/2026
  * (https://cursor.com/blog/claude-code-extension-security-notice) and the

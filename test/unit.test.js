@@ -247,3 +247,100 @@ describe("zip reader (crafted in-memory zip)", () => {
     assert.ok(m && m.name === "y");
   });
 });
+
+describe("verifyExtension integration (stub fetch, full pipeline)", () => {
+  // Builds a minimal stored (method 0) VSIX with a package.json.
+  function makeVsix(manifestObj) {
+    const payload = Buffer.from(JSON.stringify(manifestObj));
+    const fname = Buffer.from("extension/package.json");
+    const local = Buffer.alloc(30 + fname.length + payload.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt32LE(payload.length, 18);
+    local.writeUInt32LE(payload.length, 22);
+    local.writeUInt16LE(fname.length, 26);
+    fname.copy(local, 30);
+    payload.copy(local, 30 + fname.length);
+    const cd = Buffer.alloc(46 + fname.length);
+    cd.writeUInt32LE(0x02014b50, 0);
+    cd.writeUInt16LE(0, 10);
+    cd.writeUInt32LE(payload.length, 20);
+    cd.writeUInt32LE(payload.length, 24);
+    cd.writeUInt16LE(fname.length, 28);
+    cd.writeUInt32LE(0, 42);
+    fname.copy(cd, 46);
+    const eocd = Buffer.alloc(22);
+    eocd.writeUInt32LE(0x06054b50, 0);
+    eocd.writeUInt16LE(1, 8);
+    eocd.writeUInt16LE(1, 10);
+    eocd.writeUInt32LE(cd.length, 12);
+    eocd.writeUInt32LE(local.length, 16);
+    return Buffer.concat([local, cd, eocd]);
+  }
+
+  const VSIX = makeVsix({
+    name: "evil-helper",
+    publisher: "anthr0pic",
+    activationEvents: ["onStartupFinished"],
+  });
+
+  const RECORD = {
+    results: [
+      {
+        extensions: [
+          {
+            publisher: { publisherName: "anthr0pic", displayName: "Anthr0pic", flags: "" },
+            extensionName: "evil-helper",
+            displayName: "Evil Helper",
+            publishedDate: "2026-11-01T00:00:00Z",
+            statistics: [
+              { statisticName: "install", value: 12000 },
+              { statisticName: "ratingcount", value: 0 },
+            ],
+            versions: [{ version: "1.0.0", lastUpdated: "2026-11-01T00:00:00Z", files: [] }],
+          },
+        ],
+      },
+    ],
+  };
+
+  function stubFetch(url) {
+    const u = String(url);
+    const json = (data, status = 200) =>
+      new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
+    if (u.includes("extensionquery")) return Promise.resolve(json(RECORD));
+    if (u.includes("open-vsx.org")) return Promise.resolve(new Response("nf", { status: 404 }));
+    if (u.includes("vsassets.io")) {
+      const stream = new ReadableStream({
+        start(c) {
+          c.enqueue(VSIX);
+          c.close();
+        },
+      });
+      return Promise.resolve(new Response(stream, { status: 200 }));
+    }
+    return Promise.resolve(new Response("unexpected", { status: 500 }));
+  }
+
+  it("squat publisher + young + velocity + startup activation -> DENY", async () => {
+    const { verifyExtension } = await import("../dist/verify.js");
+    const r = await verifyExtension("anthr0pic.evil-helper@1.0.0", stubFetch);
+    assert.equal(r.verdict, "DENY");
+    const rules = r.findings.map((f) => f.rule);
+    assert.ok(rules.includes("publisher-name-squat"),
+      `squat rule missing: ${rules.join(",")}`);
+    assert.ok(rules.includes("runs-on-startup"), `startup rule missing: ${rules.join(",")}`);
+    assert.equal(r.extension.id, "anthr0pic.evil-helper");
+    assert.equal(r.extension.sha256.length, 64);
+    assert.ok(r.manifest.rulesVersion, "rulesVersion missing");
+  });
+
+  it("manifest JSON is re-checkable: verdict + sha256 + rulesVersion", async () => {
+    const { verifyExtension } = await import("../dist/verify.js");
+    const r = await verifyExtension("anthr0pic.evil-helper@1.0.0", stubFetch);
+    const roundTrip = JSON.parse(JSON.stringify(r));
+    assert.equal(roundTrip.verdict, "DENY");
+    assert.ok(Array.isArray(roundTrip.findings) && roundTrip.findings.length > 0);
+  });
+});

@@ -29,7 +29,11 @@ function tryRun(args) {
 
 async function networkUp() {
   try {
-    const r = await fetch("https://open-vsx.org/api/", { signal: AbortSignal.timeout(15000) });
+    // Probe a REAL endpoint: open-vsx.org/api/ (root) returns 404, so hit an
+    // actual extension record instead. If this is down, the live tests skip.
+    const r = await fetch("https://open-vsx.org/api/esbenp/prettier-vscode", {
+      signal: AbortSignal.timeout(15000),
+    });
     return r.ok;
   } catch {
     return false;
