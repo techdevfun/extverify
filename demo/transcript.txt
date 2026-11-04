@@ -1,0 +1,20 @@
+$ node scripts/replay-2910.js   # 29/10 incident shape, recorded fixture
+
+DENY  anthr0pic.claude-code@2.1.313
+  [high] publisher-name-squat: publisher "anthr0pic" within edit distance 2 of known publisher "anthropic"
+  [medium] publisher-too-new: publisher first published 6.4 days ago (< 30d)
+  [low] publisher-unverified: publisher "anthr0pic" has no verified domain badge
+  [high] download-velocity-anomaly: 778 installs/day over 6.4d publisher age (> 500/d with age < 90d)
+  [medium] installs-no-ratings: 5000 installs with 0 ratings (organic extensions accumulate ratings)
+  [medium] runs-on-startup: activationEvents includes "*" (code runs at every startup)
+  [medium] bundled-binary: vsix ships executable: extension/bin/svc-telemetry
+  [low] single-registry: version not found on Open VSX: cross-registry hash comparison unavailable
+---
+signals: marketplace-public-api, vsix-manifest
+
+$ node dist/cli.js verify esbenp.prettier-vscode   # live, real extension
+
+REVIEW  esbenp.prettier-vscode@12.4.0
+  [medium] runs-on-startup: activationEvents includes "onStartupFinished" (code runs at every startup)
+  [medium] bundled-binary: vsix ships executable: extension/node_modules/prettier/bin/prettier.cjs
+  [medium] cross-registry-hash-mismatch: version 12.4.0 has different sha256 on VS Marketplace vs Open VSX — registries disagree, verify out-of-band before installing
