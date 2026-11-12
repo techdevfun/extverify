@@ -12,6 +12,8 @@ export interface Finding {
 
 export interface RuleContext {
   ext: MarketplaceExtension;
+  /** the version actually being verified (may be older than ext.versions[0]) */
+  version: string;
   /** days since the publisher's first published version */
   publisherAgeDays: number | null;
   /** downloads per day of publisher age */
@@ -165,7 +167,7 @@ export function runRules(ctx: RuleContext): Finding[] {
     out.push({
       rule: "version-repackaged",
       severity: "high",
-      evidence: `sha256 of version ${ext.versions[0]?.version} differs from pinned value (same version, different bytes)`,
+      evidence: `sha256 of version ${ctx.version} differs from pinned value (same version, different bytes)`,
     });
   }
 
@@ -186,7 +188,7 @@ export function runRules(ctx: RuleContext): Finding[] {
     out.push({
       rule: "cross-registry-hash-mismatch",
       severity: "medium",
-      evidence: `version ${ext.versions[0]?.version} has different sha256 on VS Marketplace vs Open VSX — registries disagree, verify out-of-band before installing`,
+      evidence: `version ${ctx.version} has different sha256 on VS Marketplace vs Open VSX — registries disagree, verify out-of-band before installing`,
     });
   } else if (ctx.crossRegistry === "unavailable") {
     out.push({
