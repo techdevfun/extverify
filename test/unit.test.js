@@ -81,6 +81,7 @@ function fakeExt(over = {}) {
 function baseCtx(over = {}) {
   return {
     ext: fakeExt(),
+    version: "1.0.0",
     publisherAgeDays: 400,
     velocityPerDay: 1,
     manifest: { activationEvents: ["onLanguage:python"], contributes: { commands: [] } },
@@ -161,6 +162,38 @@ describe("runRules", () => {
   it("cross-registry match -> no finding from that rule", () => {
     const f = runRules(baseCtx({ crossRegistry: "match" }));
     assert.ok(!f.some((x) => x.rule.startsWith("cross-registry")));
+  });
+  it("evidence cites the CHECKED version, not the latest, when verifying an older version", () => {
+    // Regression: evidence used ext.versions[0] (latest, 2.0.0) even when the
+    // checked version was 1.0.0, so a repackaged/mismatched 1.0.0 was reported as 2.0.0.
+    const f = runRules(
+      baseCtx({
+        ext: fakeExt({
+          versions: [
+            { version: "2.0.0", lastUpdated: "", files: [] },
+            { version: "1.0.0", lastUpdated: "", files: [] },
+          ],
+        }),
+        version: "1.0.0",
+        pinnedSha256: "aaa",
+        actualSha256: "bbb",
+        crossRegistry: "mismatch",
+      }),
+    );
+    const repack = f.find((x) => x.rule === "version-repackaged");
+    const mismatch = f.find((x) => x.rule === "cross-registry-hash-mismatch");
+    assert.ok(repack, "version-repackaged finding missing");
+    assert.ok(mismatch, "cross-registry-hash-mismatch finding missing");
+    for (const hit of [repack, mismatch]) {
+      assert.ok(
+        hit.evidence.includes("1.0.0"),
+        `${hit.rule} evidence must cite checked version 1.0.0: ${hit.evidence}`,
+      );
+      assert.ok(
+        !hit.evidence.includes("2.0.0"),
+        `${hit.rule} evidence must not cite latest 2.0.0: ${hit.evidence}`,
+      );
+    }
   });
 });
 
