@@ -90,6 +90,7 @@ export async function verifyExtension(
 
   const ctx: RuleContext = {
     ext,
+    version: ver,
     publisherAgeDays: age,
     velocityPerDay: velocity,
     manifest,
